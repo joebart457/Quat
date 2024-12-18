@@ -1,0 +1,83 @@
+
+@anonymous_0 :-
+	if
+	'Hello from Quat\0' myprint
+	else
+	'Oops, eqaulity doesn\'t work' myprint
+	end ;
+
+Main :-
+	VARIABLE x
+	8 x STORE
+	8.0
+	x FETCH
+	FEQ
+	@anonymous_0
+	TestLoop
+;
+
+myprint :-
+	DUP
+	% 0 EQ 
+	IF 
+	RETURN
+	ELSE 
+	DUP
+	?
+	END
+	
+	GO
+	1
+	ADD
+	DUP
+	? DUP
+	
+	% 0 NEQ
+	AGAIN
+	POP
+	;
+
+TestLoop :-
+	8.0
+	GO
+	'Test' myprint
+	-1.0 FADD
+	DUP 0 FNEQ
+	AGAIN
+	;
+	
+FEQ :-
+	FCMP
+	IF
+	1 
+	ELSE
+	0
+	END ;
+
+
+EQ :-
+	CMP
+	IF
+	0
+	ELSE
+	1.0
+	END ;
+NEQ :-
+	CMP;
+FNEQ :- FCMP;
+
+NOT :-
+	CMP 
+	IF
+	0
+	ELSE
+	1
+	END;
+LT :- 
+	-1
+	EQ
+	IF
+	1
+	ELSE
+	0
+	END ;

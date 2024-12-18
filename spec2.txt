@@ -1,0 +1,52 @@
+Main :-
+	"hello from QUAT (rewrite)" print
+	VARIABLE X
+	8.0 FMOVE X STORE
+	8.00d 
+	X FETCH MOVEF
+	ExDEBUG
+	FEQ
+	IF
+	 "floating points work" print
+	ELSE
+	  "they do not" print
+	END
+	;
+
+	
+
+// pre- address on stack
+print :-
+
+	PREP 
+	DUP 
+	% 0 EQ
+	IF
+	POP
+	RETURN
+	ELSE
+	 DUP ?
+	END
+	1 ADD
+	GO;
+
+EQ :-
+	CMP
+	IF
+	0
+	ELSE
+	1
+	END ;
+
+FEQ :-
+	FCMP
+	IF
+	0
+	ELSE
+	1
+	END ;
+
+
+	
+		
+	
