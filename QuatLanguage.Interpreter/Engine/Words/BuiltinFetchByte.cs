@@ -18,17 +18,7 @@ public class BuiltinFetchByte : Word
     public override void Evaluate(QuatContext context)
     {
         var address = context.PopVStack();
-        var byteValue = Marshal.ReadByte(address);
-        if (nint.Size == 4)
-        {
-            var paddedByte = BitConverter.ToInt32([byteValue, 0, 0, 0], 0);
-            context.PushVStack(paddedByte);
-
-        }
-        else
-        {
-            long paddedByte = byteValue;
-            context.PushVStack((nint)paddedByte);
-        }
+        var byteValue = context.MemoryManager.ReadByte(address);
+        context.PushVStack(byteValue);
     }
 }

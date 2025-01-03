@@ -3,26 +3,18 @@ using QuatLanguage.Debugger.Extensions;
 using QuatLanguage.Debugger.Visualization.Views;
 using QuatLanguage.Interpreter.Engine.Words;
 using QuatLanguage.Interpreter.Parser;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Terminal.Gui;
 using TokenizerCore.Interfaces;
 using TokenizerCore.Models.Constants;
 
-
 namespace QuatLanguage.Debugger.Visualization;
 
-
-internal class DebuggerWindow : Window
+public class QuatEditorWindow : Window
 {
-    public static DebuggerWindow? Instance { get; set; } 
+    public static QuatEditorWindow? Instance { get; private set; }
 
     private List<CultureInfo> _cultureInfos;
     private string? _fileName;
@@ -32,56 +24,210 @@ internal class DebuggerWindow : Window
     private byte[] _originalText = Array.Empty<byte>();
     private bool _saved = true;
     private TabView? _tabView;
-    private string? _textToFind;
+    private string _textToFind;
     private string? _textToReplace;
     private SyntaxHighlightingTextView _textView;
-    private FindReplaceWindow? _findReplaceWindow;
+    private TextView _debugConsoleTextView;
+    private FindReplaceWindow _findReplaceWindow;
     private TableView _debugNintTableView;
     private TableView _debugNFloatTableView;
     private TableView _debugAddressTableView;
     private TableView _debugCallStackTableView;
     private DebuggableContext? _debuggableContext;
-    public bool DebugBreakOnNext { get; set; }
-
     private QuatParser _quatParser;
-
-    public void SetDebuggableContext(DebuggableContext debuggableContext)
-    {
-        _debuggableContext = debuggableContext;
-
-
-        UpdateDebugTableViews();
-    }
-    public void ClearDebuggableContext()
-    {
-        _debuggableContext = null;
-        UpdateDebugTableViews();
-    }
-
-    public DebuggerWindow()
+    public QuatEditorWindow()
     {
         Instance = this;
         BorderStyle = LineStyle.None;
-
         _cultureInfos = Application.SupportedCultures ?? new();
 
         _quatParser = DebuggableQuatContextFactory.CreateNew()
             .UseDetachedMemoryModel()
             .EmitParser();
 
+        _textView = CreateTextView();
+        Add(_textView);
 
-        _textView = new(_quatParser)
+        var menu = CreateMenuBar();
+        Add(menu);
+
+        var debugTableViews = CreateDebugTableViews();
+        foreach(var tableView in debugTableViews) Add(tableView);
+
+        var statusBar = CreateStatusBar();
+        Add(statusBar);
+
+        _debugConsoleTextView = CreateDebugConsoleTextView();
+        Add(_debugConsoleTextView);
+
+        Closed += (s, e) => Thread.CurrentThread.CurrentUICulture = new("en-US");
+
+        _findReplaceWindow = CreateFindReplace();
+        Add(_findReplaceWindow);
+    }
+
+    public void Load(string path)
+    {
+        _textView.Load(path);
+        EnterDebugView(false);
+
+    }
+
+    public void ScrollTo(IToken token)
+    {
+        UpdateDebugTableViews();
+        _textView.SetFocus();
+        var size = _textView.GetContentSize();
+        _textView.ScrollTo(token.Location.Line - (size.Height / 2));
+        _textView.HighlightToken = token;
+        //var line = _textView.GetLine(token.Location.Line);
+        //for (var i = 0; i < line.Count; i++)
+        //{
+        //    var adjustedTokenStart = token.Location.Column - token.Lexeme.Length;
+        //    if (token.Type == BuiltinTokenTypes.String)
+        //    {
+        //        adjustedTokenStart -= 2; // for enclosing ""
+        //    }
+        //    if (i < token.Location.Column && i >= adjustedTokenStart)
+        //    {
+        //        var cell = line[i];
+        //
+        //        cell.ColorScheme = new ColorScheme(new Terminal.Gui.Attribute(_textView.GetNormalColor().Foreground, Color.BrightYellow));
+        //
+        //        line[i] = cell;
+        //    }
+        //
+        //}
+    }
+
+    public bool DebugBreakOnNext => _debugBreakOnNext;
+
+    private bool _debugBreakOnNext = false;
+    private void SetBreakOnNext(bool breakOnNext = true)
+    {
+        _debugBreakOnNext = breakOnNext;
+    }
+    private bool _debuggingActive = false;
+    private void RunDebug(bool step)
+    {
+        Save();
+        if (_fileName == null) return;
+        var context = DebuggableQuatContextFactory.CreateNew()
+            .UseDetachedMemoryModel()
+            .CreateContext(_fileName, out var errors);
+        if (errors.Any())
+        {
+            MessageBox.ErrorQuery("Error parsing file!", string.Join("\r\n", errors.Select(x => x.Message)), "Ok");
+            return;
+        }
+
+        EnterDebugView(step);
+        _debuggableContext = (DebuggableContext)context;
+        try
+        {
+            _debuggableContext.LookupAndRun("Main");
+            ExitDebugView();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.ErrorQuery("Error!", ex.Message, "Ok");
+            ExitDebugView();
+            return;
+        }
+    }
+
+    public void WriteConsoleMessage(string message)
+    {
+        _debugConsoleTextView.Text += message;
+        Application.Refresh();
+    }
+
+    #region WindowOperationsBoilerplate
+
+    private void EnterDebugView(bool step)
+    {
+        SetBreakOnNext(step);
+        ShowDebugConsoleTextView();
+        _debugAddressTableView.Visible = true;
+        _debugNintTableView.Visible = true;
+        _debugNFloatTableView.Visible = true;
+        _debugCallStackTableView.Visible = true;
+        _debuggingActive = true;
+        UpdateDebugTableViews();
+        Application.Refresh();
+    }
+
+    private void ExitDebugView()
+    {
+        _debuggingActive = false;
+        _debugAddressTableView.Visible = false;
+        _debugNintTableView.Visible = false;
+        _debugNFloatTableView.Visible = false;
+        _debugCallStackTableView.Visible = false;
+        HideDebugConsoleTextView();
+        SetBreakOnNext(false);
+        Application.Refresh();
+    }
+
+    private void ShowDebugConsoleTextView()
+    {
+        _textView.Width = Dim.Percent(50);
+        _textView.Height = Dim.Percent(75);
+        _debugConsoleTextView.Visible = true;
+    }
+
+    private void HideDebugConsoleTextView()
+    {
+        _textView.Width = Dim.Percent(100);
+        _textView.Height = Dim.Percent(75);
+        _debugConsoleTextView.Visible = false;
+    }
+
+    private void UpdateDebugTableViews()
+    {
+
+        _debugNintTableView.Table = new EnumerableTableSource<nint>(
+            _debuggableContext?.ValueStack.Reverse().ToList() ?? new(),
+            new Dictionary<string, Func<nint, object>>() {
+                                { "Value",(p)=>p},
+                                { "svalue",(p)=>p.GetStringValueOrNull(_debuggableContext, 24) ?? ""},
+            });
+
+        _debugNFloatTableView.Table = new EnumerableTableSource<NFloat>(
+            _debuggableContext?.FloatStack.Reverse().ToList() ?? new(),
+            new Dictionary<string, Func<NFloat, object>>() {
+                                        { "FValue",(p)=> p },
+            });
+
+        _debugAddressTableView.Table = new EnumerableTableSource<(int, Grammar)>(
+            _debuggableContext?.AddressStack.Reverse().ToList() ?? new(),
+            new Dictionary<string, Func<(int, Grammar), object>>() {
+                                { "Address",(p)=>p.Item1},
+                                { "Rel",(p)=> p.Item2.Name},
+            });
+
+        _debugCallStackTableView.Table = new EnumerableTableSource<Grammar>(
+            _debuggableContext?.CallStack.Reverse().ToList() ?? new(),
+            new Dictionary<string, Func<Grammar, object>>() {
+                                { "Call",(p)=>p.Name},
+            });
+    }
+
+
+    public SyntaxHighlightingTextView CreateTextView()
+    {
+        return new(_quatParser)
         {
             X = 0,
             Y = 1,
-            Width = Dim.Percent(50),
+            Width = Dim.Percent(100),
             Height = Dim.Fill(1),
         };
+    }
 
-        Add(_textView);
-
-
-        var menu = new MenuBar
+    public MenuBar CreateMenuBar()
+    {
+        return new MenuBar
         {
             Menus =
             [
@@ -207,90 +353,120 @@ internal class DebuggerWindow : Window
                              )
                      }
                     ),
-                new (
-                 "StepOver",
-                 "",
-                 () => {
-                     DebugBreakOnNext = true;
-                     Quit();
-                 }
-                ),
-                new (
-                 "Continue",
-                 "",
-                 () => {
-                     DebugBreakOnNext = false;
-                     Quit();
-                 }
-                ),
-                new (
-                 "Hide",
-                 "",
-                 () => {
-                     _debugNintTableView.Visible = false;
-                     _debugNFloatTableView.Visible = false;
-                     _debugCallStackTableView.Visible = false;
-                     _debugAddressTableView.Visible = false;
-                     _textView.Width = Dim.Percent(100);
-                 }
-                ),
+                new(
+                    "_Debug",
+                    new MenuItem[]
+                    {
+                        new("_Run", "", () => RunDebug(false)),
+                        new("_Step", "", () => RunDebug(true)),
+                    }                   
+                    ),
+                new("Continue", "", () => {SetBreakOnNext(false); Quit(); }) { CanExecute = () => _debuggingActive },
+                new("Step Over", "", () => {SetBreakOnNext(true); Quit(); }){ CanExecute = () => _debuggingActive },
             ]
         };
+    }
 
-        Add(menu);
+    
 
+    public List<TableView> CreateDebugTableViews()
+    {
         _debugNintTableView = new TableView()
         {
             X = Pos.Right(_textView),
             Y = 1,
-            Width = 40,
+            Width = Dim.Percent(10),
             Height = Dim.Fill(1),
+            Visible = false,
         };
 
         _debugNFloatTableView = new TableView()
         {
             X = Pos.Right(_debugNintTableView),
             Y = 1,
-            Width = Dim.Percent(5),
+            Width = Dim.Percent(10),
             Height = Dim.Fill(1),
+            Visible = false,
         };
 
         _debugAddressTableView = new TableView()
         {
             X = Pos.Right(_debugNFloatTableView),
             Y = 1,
-            Width = Dim.Percent(15),
+            Width = Dim.Percent(10),
             Height = Dim.Fill(1),
+            Visible = false,
         };
 
         _debugCallStackTableView = new TableView()
         {
             X = Pos.Right(_debugAddressTableView),
             Y = 1,
-            Width = Dim.Percent(5),
+            Width = Dim.Percent(10),
             Height = Dim.Fill(1),
+            Visible = false,
         };
 
 
         _debugNintTableView.SelectedCellChanged += (sender, e) =>
         {
-            if (e.NewCol != 1) return; 
+            if (e.NewCol != 1) return;
 
             if (!string.IsNullOrEmpty(e.Table[e.NewRow, 1].ToString()))
             {
                 MessageBox.Query("String View", ((nint)e.Table[e.NewRow, 0]).GetStringValueOrNull(_debuggableContext, 0), "Ok");
                 _debugNintTableView.SelectedColumn = 0; // allows user to click again immeidately to re-view the contents
             }
-            
-        };
 
+        };
         UpdateDebugTableViews();
 
-        Add(_debugNintTableView, _debugNFloatTableView, _debugAddressTableView, _debugCallStackTableView);
+        return [_debugNintTableView, _debugNFloatTableView, _debugAddressTableView, _debugCallStackTableView];
+    }
 
+    private TextView CreateDebugConsoleTextView()
+    {
+        TextView textView = new TextView()
+        {
+            X = 0,
+            Y = Pos.Bottom(_textView),
+            Width = Dim.Percent(50),
+            Height = Dim.Percent(25),
+            Visible = false,
+            BorderStyle = LineStyle.HeavyDotted,
+        };
+        return textView;
+    }
+
+    private FindReplaceWindow CreateFindReplace()
+    {
+        _findReplaceWindow = new(_textView);
+        _tabView = new()
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill(0)
+        };
+
+        _tabView.AddTab(new() { DisplayText = "Find", View = CreateFindTab() }, true);
+        _tabView.AddTab(new() { DisplayText = "Replace", View = CreateReplaceTab() }, false);
+        _tabView.SelectedTabChanged += (s, e) => _tabView.SelectedTab.View.FocusDeepest(NavigationDirection.Forward, null);
+        _findReplaceWindow.Add(_tabView);
+
+        _findReplaceWindow.Visible = false;
+        return _findReplaceWindow;
+    }
+
+    public StatusBar CreateStatusBar()
+    {
         var siCursorPosition = new Shortcut(KeyCode.Null, "", null);
+        _textView.UnwrappedCursorPosition += (s, e) =>
+        {
+            siCursorPosition.Title = $"Ln {e.Point.Y + 1}, Col {e.Point.X + 1}";
+        };
 
-        var statusBar = new StatusBar(
+        return new StatusBar(
                                        new[]
                                        {
                                            new (Application.QuitKey, $"Quit", Quit),
@@ -304,74 +480,6 @@ internal class DebuggerWindow : Window
         {
             AlignmentModes = AlignmentModes.StartToEnd | AlignmentModes.IgnoreFirstOrLast
         };
-
-        //_textView.ver.AutoShow = false;
-        _textView.UnwrappedCursorPosition += (s, e) =>
-        {
-            siCursorPosition.Title = $"Ln {e.Point.Y + 1}, Col {e.Point.X + 1}";
-        };
-
-        Add(statusBar);
-
-        Closed += (s, e) => Thread.CurrentThread.CurrentUICulture = new("en-US");
-
-        CreateFindReplace();
-    }
-
-    public void ScrollTo(IToken token)
-    {
-        _textView.SetFocus();
-        var size = _textView.GetContentSize();
-        _textView.ScrollTo(token.Location.Line - (size.Height / 2));
-
-        var line = _textView.GetLine(token.Location.Line);
-        for (var i = 0; i < line.Count; i++)
-        {
-            var adjustedTokenStart = token.Location.Column - token.Lexeme.Length;
-            if (token.Type == BuiltinTokenTypes.String)
-            {
-                adjustedTokenStart -= 2; // for enclosing ""
-            }
-            if (i < token.Location.Column && i >= adjustedTokenStart)
-            {
-                var cell = line[i];
-
-                cell.ColorScheme = new ColorScheme(new Terminal.Gui.Attribute(_textView.GetNormalColor().Foreground, Color.BrightYellow));
-
-                line[i] = cell;
-            }
-            
-        }
-    }
-
-    private void UpdateDebugTableViews()
-    {
-        
-        _debugNintTableView.Table = new EnumerableTableSource<nint>(
-            _debuggableContext?.ValueStack ?? new(),
-            new Dictionary<string, Func<nint, object>>() {
-                                { "Value",(p)=>p},
-                                { "svalue",(p)=>p.GetStringValueOrNull(_debuggableContext, 24) ?? ""},
-            });
-
-        _debugNFloatTableView.Table = new EnumerableTableSource<NFloat>(
-            _debuggableContext?.FloatStack ?? new(),
-            new Dictionary<string, Func<NFloat, object>>() {
-                                        { "FValue",(p)=> p },
-            });
-
-        _debugAddressTableView.Table = new EnumerableTableSource<(int, Grammar)>(
-            _debuggableContext?.AddressStack ?? new(),
-            new Dictionary<string, Func<(int, Grammar), object>>() {
-                                { "Address",(p)=>p.Item1},
-                                { "Rel",(p)=> p.Item2.Name},
-            });
-
-        _debugCallStackTableView.Table = new EnumerableTableSource<Grammar>(
-            _debuggableContext?.CallStack ?? new(),
-            new Dictionary<string, Func<Grammar, object>>() {
-                                { "Call",(p)=>p.Name},
-            });
     }
 
     private bool CanCloseFile()
@@ -520,36 +628,6 @@ internal class DebuggerWindow : Window
         return item;
     }
 
-    //private MenuItem CreateAutocomplete()
-    //{
-    //    var singleWordGenerator = new SingleWordSuggestionGenerator();
-    //    _textView.Autocomplete.SuggestionGenerator = singleWordGenerator;
-    //
-    //    var auto = new MenuItem();
-    //    auto.Title = "Autocomplete";
-    //    auto.CheckType |= MenuItemCheckStyle.Checked;
-    //    auto.Checked = false;
-    //
-    //    auto.Action += () =>
-    //    {
-    //        if ((bool)(auto.Checked = !auto.Checked))
-    //        {de
-    //            // setup autocomplete with all words currently in the editor
-    //            singleWordGenerator.AllSuggestions =
-    //                Regex.Matches(_textView.Text, "\\w+")
-    //                     .Select(s => s.Value)
-    //                     .Distinct()
-    //                     .ToList();
-    //        }
-    //        else
-    //        {
-    //            singleWordGenerator.AllSuggestions.Clear();
-    //        }
-    //    };
-    //
-    //    return auto;
-    //}
-
     private MenuItem CreateCanFocusChecked()
     {
         var item = new MenuItem { Title = "CanFocus" };
@@ -613,18 +691,9 @@ internal class DebuggerWindow : Window
             });
             VisibleChanged += FindReplaceWindow_VisibleChanged;
             Initialized += FindReplaceWindow_Initialized;
-
-            //var btnCancel = new Button
-            //{
-            //    X = Pos.AnchorEnd (),
-            //    Y = Pos.AnchorEnd (),
-            //    Text = "Cancel"
-            //};
-            //btnCancel.Accept += (s, e) => { Visible = false; };
-            //Add (btnCancel);
         }
 
-        private void FindReplaceWindow_VisibleChanged(object sender, EventArgs e)
+        private void FindReplaceWindow_VisibleChanged(object? sender, EventArgs e)
         {
             if (Visible == false)
             {
@@ -636,7 +705,7 @@ internal class DebuggerWindow : Window
             }
         }
 
-        private void FindReplaceWindow_Initialized(object sender, EventArgs e)
+        private void FindReplaceWindow_Initialized(object? sender, EventArgs e)
         {
             Border.LineStyle = LineStyle.Dashed;
             Border.Thickness = new(0, 1, 0, 0);
@@ -646,32 +715,12 @@ internal class DebuggerWindow : Window
     private void ShowFindReplace(bool isFind = true)
     {
         _findReplaceWindow.Visible = true;
-        _findReplaceWindow.SuperView.MoveSubviewToStart(_findReplaceWindow);
+        _findReplaceWindow.SuperView?.MoveSubviewToStart(_findReplaceWindow);
         _tabView.SetFocus();
         _tabView.SelectedTab = isFind ? _tabView.Tabs.ToArray()[0] : _tabView.Tabs.ToArray()[1];
         _tabView.SelectedTab.View.FocusDeepest(NavigationDirection.Forward, null);
     }
 
-    private void CreateFindReplace()
-    {
-        _findReplaceWindow = new(_textView);
-        _tabView = new()
-        {
-            X = 0,
-            Y = 0,
-            Width = Dim.Fill(),
-            Height = Dim.Fill(0)
-        };
-
-        _tabView.AddTab(new() { DisplayText = "Find", View = CreateFindTab() }, true);
-        _tabView.AddTab(new() { DisplayText = "Replace", View = CreateReplaceTab() }, false);
-        _tabView.SelectedTabChanged += (s, e) => _tabView.SelectedTab.View.FocusDeepest(NavigationDirection.Forward, null);
-        _findReplaceWindow.Add(_tabView);
-
-        //        _tabView.SelectedTab.View.FocusLast (null); // Hack to get the first tab to be focused
-        _findReplaceWindow.Visible = false;
-        Add(_findReplaceWindow);
-    }
     private void Cut()
     {
         if (_textView != null)
@@ -998,8 +1047,6 @@ internal class DebuggerWindow : Window
     {
         if (_fileName != null)
         {
-            // FIXED: BUGBUG: #279 TextView does not know how to deal with \r\n, only \r 
-            // As a result files saved on Windows and then read back will show invalid chars.
             return SaveFile(Title, _fileName);
         }
 
@@ -1080,4 +1127,6 @@ internal class DebuggerWindow : Window
 
         _textToReplace = string.IsNullOrEmpty(_textToReplace) ? "" : _textToReplace;
     }
+
+    #endregion
 }

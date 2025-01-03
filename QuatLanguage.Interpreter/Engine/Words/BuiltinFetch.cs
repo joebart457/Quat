@@ -17,7 +17,7 @@ public class BuiltinFetch : Word
     public override void Evaluate(QuatContext context)
     {
         var address = context.PopVStack();
-        var value = Marshal.ReadIntPtr(address);
+        var value = context.MemoryManager.ReadIntPtr(address);
         context.PushVStack(value);
     }
 }

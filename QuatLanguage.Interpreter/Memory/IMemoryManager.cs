@@ -9,9 +9,12 @@
         void ForceFree(nint ptr);
         void FreeAll();
         bool FreeMemory(nint ptr);
+        nint ReadIntPtr(nint ptr);
         string? ReadAsString(nint ptr);
         T ReadAsStruct<T>(nint ptr) where T : struct;
         byte ReadByte(nint ptr);
         nint TrackMemory(nint ptr);
+        void WriteIntPtr(nint ptr, nint valueToWrite);
+        void WriteByte(nint ptr, byte valueToWrite);
     }
 }

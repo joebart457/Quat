@@ -1,20 +1,18 @@
 ﻿using QuatLanguage.Debugger.Visualization;
 using QuatLanguage.Interpreter.Engine;
 using QuatLanguage.Interpreter.Engine.Words;
+using QuatLanguage.Interpreter.Memory;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Terminal.Gui;
-using TokenizerCore.Model;
 
 namespace QuatLanguage.Debugger.Context;
 
 public class DebuggableContext : QuatContext
 {
-    public DebuggableContext(Dictionary<string, Grammar> grammars, string sourceFilePath) : base(grammars, sourceFilePath)
+    public DebuggableContext(IMemoryManager memoryManager, Dictionary<string, Grammar> grammars, string? sourceFilePath = null) 
+        : base(memoryManager, grammars, sourceFilePath)
     {
     }
 
@@ -34,26 +32,40 @@ public class DebuggableContext : QuatContext
     }
 
     private bool AppIsInitialized = false;
-    public void DoDebugBreak(Word word)
+    private bool IsSourceFileLoaded = false;
+    public override void DoDebugBreak(Word word)
     {
-        if (!AppIsInitialized)
+        //if (!AppIsInitialized)
+        //{
+        //    Application.Init();
+        //    AppIsInitialized = true;
+        //}
+        //if (DebuggerWindow.Instance == null)
+        //{
+        //    DebuggerWindow.Instance = new DebuggerWindow();
+        //}
+        //DebuggerWindow.Instance.SetDebuggableContext(this);
+        //DebuggerWindow.Instance.OpenFile(SourceFilePath);
+        //if (word.Token != null) DebuggerWindow.Instance.ScrollTo(word.Token);
+        //Application.Run(DebuggerWindow.Instance);
+        //if (AppIsInitialized && !DebuggerWindow.Instance.DebugBreakOnNext)
+        //{
+        //    Application.Shutdown();
+        //    AppIsInitialized = false;
+        //}
+
+
+        if (QuatEditorWindow.Instance != null && word.Token != null && SourceFilePath != null)
         {
-            Application.Init();
-            AppIsInitialized = true;
+            if (!IsSourceFileLoaded)
+            {
+                QuatEditorWindow.Instance.Load(SourceFilePath);
+                IsSourceFileLoaded = true;
+            }
+            QuatEditorWindow.Instance.ScrollTo(word.Token);
+            Application.Run(QuatEditorWindow.Instance);
         }
-        if (DebuggerWindow.Instance == null)
-        {
-            DebuggerWindow.Instance = new DebuggerWindow();
-        }
-        DebuggerWindow.Instance.SetDebuggableContext(this);
-        DebuggerWindow.Instance.OpenFile(SourceFilePath);
-        if (word.Token != null) DebuggerWindow.Instance.ScrollTo(word.Token);
-        Application.Run(DebuggerWindow.Instance);
-        if (AppIsInitialized && !DebuggerWindow.Instance.DebugBreakOnNext)
-        {
-            Application.Shutdown();
-            AppIsInitialized = false;
-        }
+
     }
 
     public void EvaluateGrammar(Grammar grammar)
@@ -62,7 +74,7 @@ public class DebuggableContext : QuatContext
         var context = this;
         for (int i = 0; i < Words.Count; i++)
         {
-            if (DebuggerWindow.Instance?.DebugBreakOnNext == true)
+            if (QuatEditorWindow.Instance?.DebugBreakOnNext == true)
             {
                 DoDebugBreak(Words[i]);
             }
@@ -117,6 +129,12 @@ public class DebuggableContext : QuatContext
                 }
             }
             else if (Words[i] is BuiltinEnd builtinEnd) { }
+            else if (Words[i] is BuiltinPrintChar builtinPrintChar && QuatEditorWindow.Instance != null)
+            {
+                var address = context.PopVStack();
+                var byteValue = context.MemoryManager.ReadByte(address);
+                QuatEditorWindow.Instance.WriteConsoleMessage(new string((char)byteValue, 1));
+            }
             else Words[i].Evaluate(context);
         }
     }

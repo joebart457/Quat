@@ -18,7 +18,7 @@ public class BuiltinStore : Word
     {
         var address = context.PopVStack();
         var value = context.PopVStack();
-        Marshal.WriteIntPtr(address, value);
+        context.MemoryManager.WriteIntPtr(address, value);
     }
 
 

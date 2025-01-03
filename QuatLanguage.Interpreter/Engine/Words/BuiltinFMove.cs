@@ -1,4 +1,5 @@
 ﻿using QuatLanguage.Interpreter.Constants;
+using System.Runtime.InteropServices;
 using TokenizerCore.Interfaces;
 
 namespace QuatLanguage.Interpreter.Engine.Words;

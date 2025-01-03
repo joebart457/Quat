@@ -127,6 +127,11 @@ public class QuatContext
         return ptr;
     }
 
+    public void Dispose()
+    {
+        MemoryManager.FreeAll();
+    }
+
     #endregion
 
 }

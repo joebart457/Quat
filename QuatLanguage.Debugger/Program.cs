@@ -1,10 +1,14 @@
 ﻿using QuatLanguage.Debugger.Context;
-using System.Reflection.Metadata.Ecma335;
-using TokenizerCore.Models.Constants;
+using QuatLanguage.Debugger.Visualization;
+using Terminal.Gui;
 
+//var context = DebuggableQuatContextFactory.CreateNew()
+//        .UseDetachedMemoryModel()
+//        .CreateContext("C:\\Users\\Jimmy\\Desktop\\Repositories\\QuatLanguage\\spec2.txt", out var errors);
+//context.LookupAndRun("Main");
+//context.Dispose();
 
-var context = QuatContextFactory.CreateNew()
-                .AddBasicWord<ExDebug>()
-                .AddRule((tokenParser) => tokenParser.AdvanceIfMatch(BuiltinTokenTypes.String)? new ExString(tokenParser.Previous(), tokenParser.Previous().Lexeme) : null)
-                .CreateContext("C:\\Users\\Jimmy\\Desktop\\Repositories\\QuatLanguage\\spec2.txt", out var errors);
-context.LookupAndRun("Main");
+Application.Init();
+Application.Run<QuatEditorWindow>();
+
+Application.Shutdown();

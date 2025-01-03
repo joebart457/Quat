@@ -30,6 +30,7 @@ public static class Tokenizers
                     new TokenizerRule(BuiltinWords.FetchByte, "%"),
 
                     new TokenizerRule(BuiltinWords.PrintChar, "?"),
+                    new TokenizerRule(BuiltinWords.Debug, "debug"),
 
                     new TokenizerRule(BuiltinWords.Go, "go"),
                     new TokenizerRule(BuiltinWords.Prep, "prep"),

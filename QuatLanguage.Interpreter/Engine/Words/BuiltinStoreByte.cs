@@ -19,6 +19,6 @@ public class BuiltinStoreByte : Word
         var address = context.PopVStack();
         var value = context.PopVStack();
         var byteValue = BitConverter.GetBytes(value)[0];
-        Marshal.WriteByte(address, byteValue);
+        context.MemoryManager.WriteByte(address, byteValue);
     }
 }

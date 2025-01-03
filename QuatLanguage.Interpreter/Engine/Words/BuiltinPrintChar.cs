@@ -17,7 +17,7 @@ public class BuiltinPrintChar : Word
     public override void Evaluate(QuatContext context)
     {
         var address = context.PopVStack();
-        var byteValue = Marshal.ReadByte(address);
+        var byteValue = context.MemoryManager.ReadByte(address);
         Console.Write((char)byteValue);
     }
 

@@ -71,6 +71,11 @@ public class GlobalMemoryManager : IMemoryManager
         return Marshal.ReadByte(ptr);
     }
 
+    public nint ReadIntPtr(nint ptr)
+    {
+        return Marshal.ReadIntPtr(ptr);
+    }
+
     public string? ReadAsString(IntPtr ptr)
     {
         return Marshal.PtrToStringAnsi(ptr);
@@ -79,6 +84,16 @@ public class GlobalMemoryManager : IMemoryManager
     public T ReadAsStruct<T>(IntPtr ptr) where T : struct
     {
         return Marshal.PtrToStructure<T>(ptr);
+    }
+
+    public void WriteIntPtr(nint ptr, nint valueToWrite)
+    {
+        Marshal.WriteIntPtr(ptr, valueToWrite);
+    }
+
+    public void WriteByte(nint ptr, byte valueToWrite)
+    {
+        Marshal.WriteByte(ptr, valueToWrite);
     }
 
 }

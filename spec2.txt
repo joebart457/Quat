@@ -1,16 +1,18 @@
+X :- VARIABLE;
+
 Main :-
 	"hello from QUAT (rewrite)" print
-	VARIABLE X
 	8.0 FMOVE X STORE
 	8.00d 
 	X FETCH MOVEF
-	ExDEBUG
+	DEBUG
 	FEQ
 	IF
 	 "floating points work" print
 	ELSE
 	  "they do not" print
 	END
+	DEBUG
 	;
 
 	
