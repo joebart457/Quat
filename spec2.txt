@@ -19,7 +19,6 @@ Main :-
 
 // pre- address on stack
 print :-
-
 	PREP 
 	DUP 
 	% 0 EQ

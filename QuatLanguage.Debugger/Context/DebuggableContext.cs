@@ -2,8 +2,6 @@
 using QuatLanguage.Interpreter.Engine;
 using QuatLanguage.Interpreter.Engine.Words;
 using QuatLanguage.Interpreter.Memory;
-using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Terminal.Gui;
 
@@ -28,32 +26,12 @@ public class DebuggableContext : QuatContext
             EvaluateGrammar(grammar);
             CallStack.Pop();
         }
-        else throw new InvalidOperationException($"defintion for '{word}' not found!");
+        else throw new InvalidOperationException($"definition for '{word}' not found!");
     }
 
-    private bool AppIsInitialized = false;
     private bool IsSourceFileLoaded = false;
     public override void DoDebugBreak(Word word)
     {
-        //if (!AppIsInitialized)
-        //{
-        //    Application.Init();
-        //    AppIsInitialized = true;
-        //}
-        //if (DebuggerWindow.Instance == null)
-        //{
-        //    DebuggerWindow.Instance = new DebuggerWindow();
-        //}
-        //DebuggerWindow.Instance.SetDebuggableContext(this);
-        //DebuggerWindow.Instance.OpenFile(SourceFilePath);
-        //if (word.Token != null) DebuggerWindow.Instance.ScrollTo(word.Token);
-        //Application.Run(DebuggerWindow.Instance);
-        //if (AppIsInitialized && !DebuggerWindow.Instance.DebugBreakOnNext)
-        //{
-        //    Application.Shutdown();
-        //    AppIsInitialized = false;
-        //}
-
 
         if (QuatEditorWindow.Instance != null && word.Token != null && SourceFilePath != null)
         {

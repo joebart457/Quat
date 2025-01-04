@@ -30,7 +30,7 @@ public static class BuiltinWords
     public const string FCmp = "FCmp";
 
     public const string Define = "Define";
-    public const string EndDefinition = "EndDefintion";
+    public const string EndDefinition = "EndDefinition";
 
     public const string FetchByte = "FetchByte";
     public const string StoreByte = "StoreByte";

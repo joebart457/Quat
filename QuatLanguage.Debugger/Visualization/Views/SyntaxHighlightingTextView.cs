@@ -78,7 +78,7 @@ public class SingleWordSuggestionGenerator : ISuggestionGenerator
 
         List<Rune> line = context.CurrentLine.Select(c => c.Rune).ToList();
         string currentWord = IdxToWord(line, context.CursorPosition, out int startIdx);
-        context.CursorPosition = startIdx < 1 ? startIdx : Math.Min(startIdx + 1, line.Count);
+        context.CursorPosition = startIdx < 1 ? 1 : Math.Min(startIdx + 1, line.Count);
 
         if (string.IsNullOrWhiteSpace(currentWord))
         {
@@ -182,7 +182,7 @@ public class SyntaxHighlightingTextView: TextView
             var children = ContextMenu.MenuItems.Children.ToList();
             children.Insert(0, new()
             {
-                Title = "Go to defintion",
+                Title = "Go to definition",
                 Action = () =>
                 {
                     if (_parsingTask != null)
@@ -334,9 +334,9 @@ public class SyntaxHighlightingTextView: TextView
             { BuiltinWords.If, new Attribute(Color.Yellow, GetNormalColor().Background) },
             { BuiltinWords.Else, new Attribute(Color.Yellow, GetNormalColor().Background) },
             { BuiltinWords.End, new Attribute(Color.Yellow, GetNormalColor().Background) },
-            { BuiltinWords.Go, new Attribute(Color.Yellow, GetNormalColor().Background) },
+            { BuiltinWords.Go, new Attribute(Color.Magenta, GetNormalColor().Background) },
             { BuiltinWords.Prep, new Attribute(Color.Magenta, GetNormalColor().Background) },
-            { BuiltinWords.Stay, new Attribute(Color.Yellow, GetNormalColor().Background) },
+            { BuiltinWords.Stay, new Attribute(Color.Magenta, GetNormalColor().Background) },
             { BuiltinWords.FetchByte, new Attribute(Color.Blue, GetNormalColor().Background) },
             { BuiltinWords.StoreByte, new Attribute(Color.Blue, GetNormalColor().Background) },
             { BuiltinWords.PrintChar, new Attribute(Color.Blue, GetNormalColor().Background) },

@@ -39,7 +39,7 @@ public class QuatContext
         {
             grammar.Evaluate(this);
         }
-        else throw new InvalidOperationException($"defintion for '{word}' not found!");
+        else throw new InvalidOperationException($"definition for '{word}' not found!");
     }
 
     public virtual void PushVStack(nint value)
