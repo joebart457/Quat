@@ -33,6 +33,7 @@ public class QuatEditorWindow : Window
     private TableView _debugNFloatTableView;
     private TableView _debugAddressTableView;
     private TableView _debugCallStackTableView;
+    private MenuBar _menuBar;
     private DebuggableContext? _debuggableContext;
     private QuatParser _quatParser;
     public QuatEditorWindow()
@@ -48,8 +49,8 @@ public class QuatEditorWindow : Window
         _textView = CreateTextView();
         Add(_textView);
 
-        var menu = CreateMenuBar();
-        Add(menu);
+        _menuBar = CreateMenuBar();
+        Add(_menuBar);
 
         var debugTableViews = CreateDebugTableViews();
         foreach(var tableView in debugTableViews) Add(tableView);
@@ -109,10 +110,14 @@ public class QuatEditorWindow : Window
         try
         {
             _debuggableContext.LookupAndRun("Main");
+            _debuggableContext.Dispose();
+            _debuggableContext = null;
             ExitDebugView();
+            if (Running == false) Application.Run(this);
         }
         catch (Exception ex)
         {
+            if (Running == false) Application.Run(this);
             MessageBox.ErrorQuery("Error!", ex.Message, "Ok");
             ExitDebugView();
             return;
@@ -136,6 +141,7 @@ public class QuatEditorWindow : Window
         _debugNFloatTableView.Visible = true;
         _debugCallStackTableView.Visible = true;
         _debuggingActive = true;
+        _menuBar.Menus = CreateDebugMenuBarItems();
         UpdateDebugTableViews();
         Application.Refresh();
     }
@@ -147,6 +153,7 @@ public class QuatEditorWindow : Window
         _debugNintTableView.Visible = false;
         _debugNFloatTableView.Visible = false;
         _debugCallStackTableView.Visible = false;
+        _menuBar.Menus = CreateMenuBarItems();
         HideDebugConsoleTextView();
         SetBreakOnNext(false);
         Application.Refresh();
@@ -162,7 +169,7 @@ public class QuatEditorWindow : Window
     private void HideDebugConsoleTextView()
     {
         _textView.Width = Dim.Percent(100);
-        _textView.Height = Dim.Percent(75);
+        _textView.Height = Dim.Fill(1);
         _debugConsoleTextView.Visible = false;
     }
 
@@ -208,12 +215,17 @@ public class QuatEditorWindow : Window
         };
     }
 
-    public MenuBar CreateMenuBar()
+    private MenuBar CreateMenuBar()
     {
         return new MenuBar
         {
-            Menus =
-            [
+            Menus = CreateMenuBarItems()
+        };
+    }
+
+    private MenuBarItem[] CreateMenuBarItems()
+    {
+        return [
                 new (
                      "_File",
                      new MenuItem []
@@ -342,15 +354,150 @@ public class QuatEditorWindow : Window
                     {
                         new("_Run", "", () => RunDebug(false)),
                         new("_Step", "", () => RunDebug(true)),
-                    }                   
+                    }
+                    ),
+            ];
+    }
+
+    private MenuBarItem[] CreateDebugMenuBarItems()
+    {
+        return [
+                new (
+                     "_File",
+                     new MenuItem []
+                     {
+                         new ("_New", "", () => New ()),
+                         new ("_Open", "", () => Open ()),
+                         new ("_Save", "", () => Save ()),
+                         new ("_Save As", "", () => SaveAs ()),
+                         new ("_Close", "", () => CloseFile ()),
+                         null,
+                         new ("_Quit", "", () => Quit ())
+                     }
+                    ),
+                new (
+                     "_Edit",
+                     new MenuItem []
+                     {
+                         new (
+                              "_Copy",
+                              "",
+                              () => Copy (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask | KeyCode.C
+                             ),
+                         new (
+                              "C_ut",
+                              "",
+                              () => Cut (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask | KeyCode.W
+                             ),
+                         new (
+                              "_Paste",
+                              "",
+                              () => Paste (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask | KeyCode.Y
+                             ),
+                         null,
+                         new (
+                              "_Find",
+                              "",
+                              () => Find (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask | KeyCode.S
+                             ),
+                         new (
+                              "Find _Next",
+                              "",
+                              () => FindNext (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask
+                              | KeyCode.ShiftMask
+                              | KeyCode.S
+                             ),
+                         new (
+                              "Find P_revious",
+                              "",
+                              () => FindPrevious (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask
+                              | KeyCode.ShiftMask
+                              | KeyCode.AltMask
+                              | KeyCode.S
+                             ),
+                         new (
+                              "_Replace",
+                              "",
+                              () => Replace (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask | KeyCode.R
+                             ),
+                         new (
+                              "Replace Ne_xt",
+                              "",
+                              () => ReplaceNext (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask
+                              | KeyCode.ShiftMask
+                              | KeyCode.R
+                             ),
+                         new (
+                              "Replace Pre_vious",
+                              "",
+                              () => ReplacePrevious (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask
+                              | KeyCode.ShiftMask
+                              | KeyCode.AltMask
+                              | KeyCode.R
+                             ),
+                         new (
+                              "Replace _All",
+                              "",
+                              () => ReplaceAll (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask
+                              | KeyCode.ShiftMask
+                              | KeyCode.AltMask
+                              | KeyCode.A
+                             ),
+                         null,
+                         new (
+                              "_Select All",
+                              "",
+                              () => SelectAll (),
+                              null,
+                              null,
+                              KeyCode.CtrlMask | KeyCode.T
+                             )
+                     }
+                    ),
+                new(
+                    "_Debug",
+                    new MenuItem[]
+                    {
+                        new("_Run", "", () => RunDebug(false)),
+                        new("_Step", "", () => RunDebug(true)),
+                    }
                     ),
                 new("Continue", "", () => {SetBreakOnNext(false); Quit(); }) { CanExecute = () => _debuggingActive },
                 new("Step Over", "", () => {SetBreakOnNext(true); Quit(); }){ CanExecute = () => _debuggingActive },
-            ]
-        };
+            ];
     }
 
-    
+
 
     public List<TableView> CreateDebugTableViews()
     {
