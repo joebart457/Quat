@@ -115,8 +115,11 @@ public class QuatParser : TokenParser
 
     public Grammar ParseGrammar()
     {
+        AdvancePastComments();
         var name = Consume(BuiltinTokenTypes.Word, "expect definition");
+        AdvancePastComments();
         Consume(BuiltinWords.Define, "expect <name> :- definition ;");
+        AdvancePastComments();
         var words = new List<Word>();
         if (!AdvanceIfMatch(BuiltinWords.EndDefinition))
         {
@@ -131,10 +134,15 @@ public class QuatParser : TokenParser
 
     public Word ParseWord()
     {
-        foreach(var wordParsingRule in _wordParsingRules)
+        AdvancePastComments();
+        foreach (var wordParsingRule in _wordParsingRules)
         {
             var parsedResult = wordParsingRule(_memoryManager, this);
-            if (parsedResult != null) return parsedResult;
+            if (parsedResult != null)
+            {
+                AdvancePastComments();
+                return parsedResult;
+            }
         }
 
         throw new ParsingException(Current(), $"unexpected token {Current()}");
@@ -147,5 +155,10 @@ public class QuatParser : TokenParser
             if (AdvanceIfMatch(BuiltinWords.EndDefinition)) break;
             Advance();
         }
+    }
+
+    private void AdvancePastComments()
+    {
+        while (!AtEnd() && (AdvanceIfMatch(BuiltinTokenTypes.EndOfLineComment) || AdvanceIfMatch(BuiltinTokenTypes.MultiLineComment))) ;
     }
 }

@@ -9,14 +9,14 @@ using System.Text;
 using System.Threading.Tasks;
 using static QuatLanguage.Debugger.Visualization.Natives.NativeFunctions;
 
-namespace QuatLanguage.Debugger.Extensions;
+namespace QuatLanguage.Debugger.Visualization.Extensions;
 internal static class NintExtensions
 {
     public static string? GetStringValueOrNull(this nint nativeInt, DebuggableContext? context, int maxLen)
     {
         try
         {
-            if (nativeInt == IntPtr.Zero) return null;
+            if (nativeInt == nint.Zero) return null;
             var maxLength = GetMaxStringLength(nativeInt, maxLen);
             if (maxLen == 0) maxLen = maxLength;
             if (maxLength == 0) return null;

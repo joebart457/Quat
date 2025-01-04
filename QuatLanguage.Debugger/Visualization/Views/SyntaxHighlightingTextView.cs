@@ -5,7 +5,6 @@ using QuatLanguage.Interpreter.Constants;
 using QuatLanguage.Interpreter.Parser;
 using Attribute = Terminal.Gui.Attribute;
 using System.Text;
-using QuatLanguage.Interpreter.Engine;
 using QuatLanguage.Interpreter.Engine.Words;
 
 namespace QuatLanguage.Debugger.Visualization.Views;
@@ -165,7 +164,6 @@ public class SingleWordSuggestionGenerator : ISuggestionGenerator
 
 public class SyntaxHighlightingTextView: TextView
 {
-
     public IToken? HighlightToken { get; set; }
     private SingleWordSuggestionGenerator _suggestionGenerator;
     public SyntaxHighlightingTextView(QuatParser parser)
@@ -286,9 +284,13 @@ public class SyntaxHighlightingTextView: TextView
         var token = tokens.Find(token =>
         {
             int adjustedStart = token.Location.Column - token.Lexeme.Length;
-            if (token.Type == BuiltinTokenTypes.String)
+            if (token.Type == BuiltinTokenTypes.String || token.Type == BuiltinTokenTypes.EndOfLineComment)
             {
                 adjustedStart -= 2;
+            }
+            else if (token.Type == BuiltinTokenTypes.MultiLineComment)
+            {
+                adjustedStart -= 4;
             }
             return e.UnwrappedPosition.Row == token.Location.Line && e.Col < token.Location.Column && e.Col >= adjustedStart;
         });
@@ -342,6 +344,8 @@ public class SyntaxHighlightingTextView: TextView
             { BuiltinWords.PrintChar, new Attribute(Color.Blue, GetNormalColor().Background) },
             { BuiltinWords.Debug, new Attribute(Color.BrightRed, GetNormalColor().Background) },
             { BuiltinTokenTypes.String, new Attribute(Color.Cyan, GetNormalColor().Background) },
+            { BuiltinTokenTypes.EndOfLineComment, new Attribute(Color.Green, GetNormalColor().Background) },
+            { BuiltinTokenTypes.MultiLineComment, new Attribute(Color.Green, GetNormalColor().Background) },
         };
     }
 }

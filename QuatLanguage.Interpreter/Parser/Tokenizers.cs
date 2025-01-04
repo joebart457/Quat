@@ -58,6 +58,7 @@ public static class Tokenizers
         WordIncluded = "_@?",
         IgnoreCase = true,
         TabSize = 1,
+        CommentsAsTokens = true,
     };
     public static Tokenizer Default => new Tokenizer(_defaultRules, DefaultSettings);
 

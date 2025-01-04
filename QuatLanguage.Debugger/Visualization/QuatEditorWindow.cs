@@ -1,5 +1,5 @@
 ﻿using QuatLanguage.Debugger.Context;
-using QuatLanguage.Debugger.Extensions;
+using QuatLanguage.Debugger.Visualization.Extensions;
 using QuatLanguage.Debugger.Visualization.Views;
 using QuatLanguage.Interpreter.Engine.Words;
 using QuatLanguage.Interpreter.Parser;
@@ -80,24 +80,6 @@ public class QuatEditorWindow : Window
         var size = _textView.GetContentSize();
         _textView.ScrollTo(token.Location.Line - (size.Height / 2));
         _textView.HighlightToken = token;
-        //var line = _textView.GetLine(token.Location.Line);
-        //for (var i = 0; i < line.Count; i++)
-        //{
-        //    var adjustedTokenStart = token.Location.Column - token.Lexeme.Length;
-        //    if (token.Type == BuiltinTokenTypes.String)
-        //    {
-        //        adjustedTokenStart -= 2; // for enclosing ""
-        //    }
-        //    if (i < token.Location.Column && i >= adjustedTokenStart)
-        //    {
-        //        var cell = line[i];
-        //
-        //        cell.ColorScheme = new ColorScheme(new Terminal.Gui.Attribute(_textView.GetNormalColor().Foreground, Color.BrightYellow));
-        //
-        //        line[i] = cell;
-        //    }
-        //
-        //}
     }
 
     public bool DebugBreakOnNext => _debugBreakOnNext;
@@ -117,7 +99,8 @@ public class QuatEditorWindow : Window
             .CreateContext(_fileName, out var errors);
         if (errors.Any())
         {
-            MessageBox.ErrorQuery("Error parsing file!", string.Join("\r\n", errors.Select(x => x.Message)), "Ok");
+            ScrollTo(errors.First().Token);
+            MessageBox.ErrorQuery("Parsing Error!", string.Join("\r\n", errors.Select(x => x.Message)), "Ok");
             return;
         }
 
