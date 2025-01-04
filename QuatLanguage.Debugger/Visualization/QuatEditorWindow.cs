@@ -154,6 +154,7 @@ public class QuatEditorWindow : Window
         _debugNFloatTableView.Visible = false;
         _debugCallStackTableView.Visible = false;
         _menuBar.Menus = CreateMenuBarItems();
+        _textView.HighlightToken = null;
         HideDebugConsoleTextView();
         SetBreakOnNext(false);
         Application.Refresh();
@@ -505,9 +506,18 @@ public class QuatEditorWindow : Window
         {
             X = Pos.Right(_textView),
             Y = 1,
-            Width = Dim.Percent(10),
+            Width = Dim.Percent(20),
             Height = Dim.Fill(1),
             Visible = false,
+            Style = new TableStyle()
+            {
+                ShowHeaders = true,
+                ColumnStyles = new()
+                {
+                    {0, new(){ MinWidth = (IntPtr.Size / 2) * 5, MaxWidth = (IntPtr.Size / 2) * 5} },
+                    {1, new(){ MinWidth = 5, MaxWidth = 24} }
+                }
+            }
         };
 
         _debugNFloatTableView = new TableView()

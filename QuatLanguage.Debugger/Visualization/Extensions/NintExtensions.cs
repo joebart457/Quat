@@ -17,7 +17,7 @@ internal static class NintExtensions
         try
         {
             if (nativeInt == nint.Zero) return null;
-            var maxLength = GetMaxStringLength(nativeInt, maxLen);
+            var maxLength = GetMaxStringLength(nativeInt, maxLen > 0? maxLen: 10000);
             if (maxLen == 0) maxLen = maxLength;
             if (maxLength == 0) return null;
             return Marshal.PtrToStringAnsi(nativeInt, Math.Min(maxLen, maxLength));
