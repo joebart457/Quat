@@ -8,11 +8,15 @@
     <Platforms>AnyCPU;x86</Platforms>
     <Description>The core interpreter for the Quat Language. Built-in words and parser are entirely extensible and customizable.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	  <VersionPrefix>2.1.2</VersionPrefix>
+	  <VersionPrefix>3.0.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ParserLite" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QuatLanguage.Core\QuatLanguage.Core.csproj" />
   </ItemGroup>
 
 </Project>

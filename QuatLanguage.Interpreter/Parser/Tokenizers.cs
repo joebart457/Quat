@@ -1,4 +1,4 @@
-﻿using QuatLanguage.Interpreter.Constants;
+﻿using QuatLanguage.Core.Constants;
 using TokenizerCore.Model;
 using TokenizerCore.Models.Constants;
 using TokenizerCore;
@@ -40,6 +40,7 @@ public static class Tokenizers
                     new TokenizerRule(BuiltinWords.FMove, "fmove"),
                     new TokenizerRule(BuiltinWords.MoveF, "movef"),
                     new TokenizerRule(BuiltinWords.ReadKey, "readkey"),
+                    new TokenizerRule(BuiltinWords.LoadLibrary, "loadlibrary"),
 
                     new TokenizerRule(BuiltinWords.Define, ":-"),
                     new TokenizerRule(BuiltinWords.EndDefinition, ";"),

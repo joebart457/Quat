@@ -1,7 +1,7 @@
 ﻿using QuatLanguage.Debugger.Visualization;
-using QuatLanguage.Interpreter.Engine;
-using QuatLanguage.Interpreter.Engine.Words;
-using QuatLanguage.Interpreter.Memory;
+using QuatLanguage.Core.Engine;
+using QuatLanguage.Core.Engine.Words;
+using QuatLanguage.Core.Memory;
 using System.Runtime.InteropServices;
 using Terminal.Gui;
 
@@ -30,14 +30,14 @@ public class DebuggableContext : QuatContext
     }
 
     private bool IsSourceFileLoaded = false;
-    public override void DoDebugBreak(Word word)
+    public override void DoDebugBreak(QuatWord word)
     {
 
-        if (QuatEditorWindow.Instance != null && word.Token != null && SourceFilePath != null)
+        if (word.Token != null && SourceFilePath != null)
         {
             if (!IsSourceFileLoaded)
             {
-                QuatEditorWindow.Instance.Load(SourceFilePath);
+                QuatEditorWindow.Instance.LoadDebugView(SourceFilePath);
                 IsSourceFileLoaded = true;
             }
             QuatEditorWindow.Instance.ScrollTo(word.Token);

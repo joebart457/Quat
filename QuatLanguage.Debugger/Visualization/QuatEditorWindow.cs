@@ -1,20 +1,21 @@
 ﻿using QuatLanguage.Debugger.Context;
 using QuatLanguage.Debugger.Visualization.Extensions;
 using QuatLanguage.Debugger.Visualization.Views;
-using QuatLanguage.Interpreter.Engine.Words;
+using QuatLanguage.Core.Engine.Words;
 using QuatLanguage.Interpreter.Parser;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Terminal.Gui;
 using TokenizerCore.Interfaces;
-using TokenizerCore.Models.Constants;
 
 namespace QuatLanguage.Debugger.Visualization;
 
 public class QuatEditorWindow : Window
 {
-    public static QuatEditorWindow? Instance { get; private set; }
+    public static QuatEditorWindow Create() => _instance = new QuatEditorWindow();
+    private static QuatEditorWindow? _instance;
+    public static QuatEditorWindow Instance => _instance ?? Create();
 
     private List<CultureInfo> _cultureInfos;
     private string? _fileName;
@@ -28,7 +29,6 @@ public class QuatEditorWindow : Window
     private string? _textToReplace;
     private SyntaxHighlightingTextView _textView;
     private TextView _debugConsoleTextView;
-    private FindReplaceWindow _findReplaceWindow;
     private TableView _debugNintTableView;
     private TableView _debugNFloatTableView;
     private TableView _debugAddressTableView;
@@ -38,7 +38,7 @@ public class QuatEditorWindow : Window
     private QuatParser _quatParser;
     public QuatEditorWindow()
     {
-        Instance = this;
+        _instance = this;
         BorderStyle = LineStyle.None;
         _cultureInfos = Application.SupportedCultures ?? new();
 
@@ -62,14 +62,18 @@ public class QuatEditorWindow : Window
         Add(_debugConsoleTextView);
 
         Closed += (s, e) => Thread.CurrentThread.CurrentUICulture = new("en-US");
-
-        _findReplaceWindow = CreateFindReplace();
-        Add(_findReplaceWindow);
     }
 
     public void Load(string path)
     {
-        _textView.Load(path);
+        _fileName = path;
+        LoadFile();
+    }
+
+    public void LoadDebugView(string path)
+    {
+        _fileName = path;
+        LoadFile();
         EnterDebugView(false);
 
     }
@@ -91,9 +95,9 @@ public class QuatEditorWindow : Window
         _debugBreakOnNext = breakOnNext;
     }
     private bool _debuggingActive = false;
-    private void RunDebug(bool step)
+    public void RunDebug(bool step)
     {
-        Save();
+        if (_textView.IsDirty) Save();
         if (_fileName == null) return;
         var context = DebuggableQuatContextFactory.CreateNew()
             .UseDetachedMemoryModel()
@@ -270,82 +274,14 @@ public class QuatEditorWindow : Window
                              ),
                          null,
                          new (
-                              "_Find",
-                              "",
-                              () => Find (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask | KeyCode.S
-                             ),
-                         new (
-                              "Find _Next",
-                              "",
-                              () => FindNext (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.S
-                             ),
-                         new (
-                              "Find P_revious",
-                              "",
-                              () => FindPrevious (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.AltMask
-                              | KeyCode.S
-                             ),
-                         new (
-                              "_Replace",
-                              "",
-                              () => Replace (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask | KeyCode.R
-                             ),
-                         new (
-                              "Replace Ne_xt",
-                              "",
-                              () => ReplaceNext (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.R
-                             ),
-                         new (
-                              "Replace Pre_vious",
-                              "",
-                              () => ReplacePrevious (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.AltMask
-                              | KeyCode.R
-                             ),
-                         new (
-                              "Replace _All",
-                              "",
-                              () => ReplaceAll (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.AltMask
-                              | KeyCode.A
-                             ),
-                         null,
-                         new (
-                              "_Select All",
+                              "Select All",
                               "",
                               () => SelectAll (),
                               null,
                               null,
-                              KeyCode.CtrlMask | KeyCode.T
+                              KeyCode.CtrlMask | KeyCode.A
+
+
                              )
                      }
                     ),
@@ -354,7 +290,7 @@ public class QuatEditorWindow : Window
                     new MenuItem[]
                     {
                         new("_Run", "", () => RunDebug(false)),
-                        new("_Step", "", () => RunDebug(true)),
+                        new("_Step Into", "", () => RunDebug(true)),
                     }
                     ),
             ];
@@ -406,76 +342,6 @@ public class QuatEditorWindow : Window
                              ),
                          null,
                          new (
-                              "_Find",
-                              "",
-                              () => Find (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask | KeyCode.S
-                             ),
-                         new (
-                              "Find _Next",
-                              "",
-                              () => FindNext (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.S
-                             ),
-                         new (
-                              "Find P_revious",
-                              "",
-                              () => FindPrevious (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.AltMask
-                              | KeyCode.S
-                             ),
-                         new (
-                              "_Replace",
-                              "",
-                              () => Replace (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask | KeyCode.R
-                             ),
-                         new (
-                              "Replace Ne_xt",
-                              "",
-                              () => ReplaceNext (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.R
-                             ),
-                         new (
-                              "Replace Pre_vious",
-                              "",
-                              () => ReplacePrevious (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.AltMask
-                              | KeyCode.R
-                             ),
-                         new (
-                              "Replace _All",
-                              "",
-                              () => ReplaceAll (),
-                              null,
-                              null,
-                              KeyCode.CtrlMask
-                              | KeyCode.ShiftMask
-                              | KeyCode.AltMask
-                              | KeyCode.A
-                             ),
-                         null,
-                         new (
                               "_Select All",
                               "",
                               () => SelectAll (),
@@ -493,8 +359,8 @@ public class QuatEditorWindow : Window
                         new("_Step", "", () => RunDebug(true)),
                     }
                     ),
-                new("Continue", "", () => {SetBreakOnNext(false); Quit(); }) { CanExecute = () => _debuggingActive },
-                new("Step Over", "", () => {SetBreakOnNext(true); Quit(); }){ CanExecute = () => _debuggingActive },
+                new("Continue", "", () => {SetBreakOnNext(false); Application.RequestStop(); }) { CanExecute = () => _debuggingActive },
+                new("Step Over", "", () => {SetBreakOnNext(true); Application.RequestStop(); }){ CanExecute = () => _debuggingActive },
             ];
     }
 
@@ -578,26 +444,6 @@ public class QuatEditorWindow : Window
         return textView;
     }
 
-    private FindReplaceWindow CreateFindReplace()
-    {
-        _findReplaceWindow = new(_textView);
-        _tabView = new()
-        {
-            X = 0,
-            Y = 0,
-            Width = Dim.Fill(),
-            Height = Dim.Fill(0)
-        };
-
-        _tabView.AddTab(new() { DisplayText = "Find", View = CreateFindTab() }, true);
-        _tabView.AddTab(new() { DisplayText = "Replace", View = CreateReplaceTab() }, false);
-        _tabView.SelectedTabChanged += (s, e) => _tabView.SelectedTab.View.FocusDeepest(NavigationDirection.Forward, null);
-        _findReplaceWindow.Add(_tabView);
-
-        _findReplaceWindow.Visible = false;
-        return _findReplaceWindow;
-    }
-
     public StatusBar CreateStatusBar()
     {
         var siCursorPosition = new Shortcut(KeyCode.Null, "", null);
@@ -668,301 +514,6 @@ public class QuatEditorWindow : Window
         }
     }
 
-    private void ContinueFind(bool next = true, bool replace = false)
-    {
-        if (!replace && string.IsNullOrEmpty(_textToFind))
-        {
-            Find();
-
-            return;
-        }
-
-        if (replace
-            && (string.IsNullOrEmpty(_textToFind)
-                || (_findReplaceWindow == null && string.IsNullOrEmpty(_textToReplace))))
-        {
-            Replace();
-
-            return;
-        }
-
-        bool found;
-        bool gaveFullTurn;
-
-        if (next)
-        {
-            if (!replace)
-            {
-                found = _textView.FindNextText(
-                                                _textToFind,
-                                                out gaveFullTurn,
-                                                _matchCase,
-                                                _matchWholeWord
-                                               );
-            }
-            else
-            {
-                found = _textView.FindNextText(
-                                                _textToFind,
-                                                out gaveFullTurn,
-                                                _matchCase,
-                                                _matchWholeWord,
-                                                _textToReplace,
-                                                true
-                                               );
-            }
-        }
-        else
-        {
-            if (!replace)
-            {
-                found = _textView.FindPreviousText(
-                                                    _textToFind,
-                                                    out gaveFullTurn,
-                                                    _matchCase,
-                                                    _matchWholeWord
-                                                   );
-            }
-            else
-            {
-                found = _textView.FindPreviousText(
-                                                    _textToFind,
-                                                    out gaveFullTurn,
-                                                    _matchCase,
-                                                    _matchWholeWord,
-                                                    _textToReplace,
-                                                    true
-                                                   );
-            }
-        }
-
-        if (!found)
-        {
-            MessageBox.Query("Find", $"The following specified text was not found: '{_textToFind}'", "Ok");
-        }
-        else if (gaveFullTurn)
-        {
-            MessageBox.Query(
-                              "Find",
-                              $"No more occurrences were found for the following specified text: '{_textToFind}'",
-                              "Ok"
-                             );
-        }
-    }
-
-    private void Copy()
-    {
-        if (_textView != null)
-        {
-            _textView.Copy();
-        }
-    }
-
-    private MenuItem CreateAllowsTabChecked()
-    {
-        var item = new MenuItem { Title = "Allows Tab" };
-        item.CheckType |= MenuItemCheckStyle.Checked;
-        item.Checked = _textView.AllowsTab;
-        item.Action += () => { _textView.AllowsTab = (bool)(item.Checked = !item.Checked); };
-
-        return item;
-    }
-
-    private MenuItem CreateCanFocusChecked()
-    {
-        var item = new MenuItem { Title = "CanFocus" };
-        item.CheckType |= MenuItemCheckStyle.Checked;
-        item.Checked = _textView.CanFocus;
-
-        item.Action += () =>
-        {
-            _textView.CanFocus = (bool)(item.Checked = !item.Checked);
-
-            if (_textView.CanFocus)
-            {
-                _textView.SetFocus();
-            }
-        };
-
-        return item;
-    }
-
-
-    private void CreateDemoFile(string fileName)
-    {
-        var sb = new StringBuilder();
-
-        sb.Append("Hello world.\n");
-        sb.Append("This is a test of the Emergency Broadcast System.\n");
-
-        for (var i = 0; i < 30; i++)
-        {
-            sb.Append(
-                       $"{i} - This is a test with a very long line and many lines to test the ScrollViewBar against the TextView. - {i}\n"
-                      );
-        }
-
-        StreamWriter sw = File.CreateText(fileName);
-        sw.Write(sb.ToString());
-        sw.Close();
-    }
-
-
-    private class FindReplaceWindow : Window
-    {
-        private TextView _textView;
-        public FindReplaceWindow(TextView textView)
-        {
-            Title = "Find and Replace";
-
-            _textView = textView;
-            X = Pos.AnchorEnd() - 1;
-            Y = 2;
-            Width = 57;
-            Height = 11;
-            Arrangement = ViewArrangement.Movable;
-
-            KeyBindings.Add(Key.Esc, Command.Cancel);
-            AddCommand(Command.Cancel, () =>
-            {
-                Visible = false;
-
-                return true;
-            });
-            VisibleChanged += FindReplaceWindow_VisibleChanged;
-            Initialized += FindReplaceWindow_Initialized;
-        }
-
-        private void FindReplaceWindow_VisibleChanged(object? sender, EventArgs e)
-        {
-            if (Visible == false)
-            {
-                _textView.SetFocus();
-            }
-            else
-            {
-                FocusDeepest(NavigationDirection.Forward, null);
-            }
-        }
-
-        private void FindReplaceWindow_Initialized(object? sender, EventArgs e)
-        {
-            Border.LineStyle = LineStyle.Dashed;
-            Border.Thickness = new(0, 1, 0, 0);
-        }
-    }
-
-    private void ShowFindReplace(bool isFind = true)
-    {
-        _findReplaceWindow.Visible = true;
-        _findReplaceWindow.SuperView?.MoveSubviewToStart(_findReplaceWindow);
-        _tabView.SetFocus();
-        _tabView.SelectedTab = isFind ? _tabView.Tabs.ToArray()[0] : _tabView.Tabs.ToArray()[1];
-        _tabView.SelectedTab.View.FocusDeepest(NavigationDirection.Forward, null);
-    }
-
-    private void Cut()
-    {
-        if (_textView != null)
-        {
-            _textView.Cut();
-        }
-    }
-
-    private void Find() { ShowFindReplace(true); }
-    private void FindNext() { ContinueFind(); }
-    private void FindPrevious() { ContinueFind(false); }
-
-    private View CreateFindTab()
-    {
-        var d = new View()
-        {
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
-
-        int lblWidth = "Replace:".Length;
-
-        var label = new Label
-        {
-            Width = lblWidth,
-            TextAlignment = Alignment.End,
-
-            Text = "Find:"
-        };
-        d.Add(label);
-
-        SetFindText();
-
-        var txtToFind = new TextField
-        {
-            X = Pos.Right(label) + 1,
-            Y = Pos.Top(label),
-            Width = Dim.Fill(1),
-            Text = _textToFind
-        };
-        txtToFind.HasFocusChanging += (s, e) => txtToFind.Text = _textToFind;
-        d.Add(txtToFind);
-
-        var btnFindNext = new Button
-        {
-            X = Pos.Align(Alignment.Center),
-            Y = Pos.AnchorEnd(),
-            Enabled = !string.IsNullOrEmpty(txtToFind.Text),
-            IsDefault = true,
-
-            Text = "Find _Next"
-        };
-        btnFindNext.Accept += (s, e) => FindNext();
-        d.Add(btnFindNext);
-
-        var btnFindPrevious = new Button
-        {
-            X = Pos.Align(Alignment.Center),
-            Y = Pos.AnchorEnd(),
-            Enabled = !string.IsNullOrEmpty(txtToFind.Text),
-            Text = "Find _Previous"
-        };
-        btnFindPrevious.Accept += (s, e) => FindPrevious();
-        d.Add(btnFindPrevious);
-
-        txtToFind.TextChanged += (s, e) =>
-        {
-            _textToFind = txtToFind.Text;
-            _textView.FindTextChanged();
-            btnFindNext.Enabled = !string.IsNullOrEmpty(txtToFind.Text);
-            btnFindPrevious.Enabled = !string.IsNullOrEmpty(txtToFind.Text);
-        };
-
-        var ckbMatchCase = new CheckBox
-        {
-            X = 0,
-            Y = Pos.Top(txtToFind) + 2,
-            CheckedState = _matchCase ? CheckState.Checked : CheckState.UnChecked,
-            Text = "Match c_ase"
-        };
-        ckbMatchCase.CheckedStateChanging += (s, e) => _matchCase = e.NewValue == CheckState.Checked;
-        d.Add(ckbMatchCase);
-
-        var ckbMatchWholeWord = new CheckBox
-        {
-            X = 0,
-            Y = Pos.Top(ckbMatchCase) + 1,
-            CheckedState = _matchWholeWord ? CheckState.Checked : CheckState.UnChecked,
-            Text = "Match _whole word"
-        };
-        ckbMatchWholeWord.CheckedStateChanging += (s, e) => _matchWholeWord = e.NewValue == CheckState.Checked;
-        d.Add(ckbMatchWholeWord);
-        return d;
-    }
-
-
-    public void OpenFile(string? path)
-    {
-        _fileName = path;
-        LoadFile();
-    }
-
     private void LoadFile()
     {
         if (_fileName != null)
@@ -1020,13 +571,26 @@ public class QuatEditorWindow : Window
         d.Dispose();
     }
 
+    private void Copy()
+    {
+        _textView.Copy();
+    }
+
     private void Paste()
     {
-        if (_textView != null)
-        {
-            _textView.Paste();
-        }
+        _textView.Paste();
     }
+
+    private void Cut()
+    {
+        _textView.Cut();
+    }
+
+    private void SelectAll() 
+    {
+        _textView.SelectAll();
+    }
+
 
     private void Quit()
     {
@@ -1036,151 +600,6 @@ public class QuatEditorWindow : Window
         }
 
         Application.RequestStop();
-    }
-
-    private void Replace() { ShowFindReplace(false); }
-
-    private void ReplaceAll()
-    {
-        if (string.IsNullOrEmpty(_textToFind) || (string.IsNullOrEmpty(_textToReplace) && _findReplaceWindow == null))
-        {
-            Replace();
-
-            return;
-        }
-
-        if (_textView.ReplaceAllText(_textToFind, _matchCase, _matchWholeWord, _textToReplace))
-        {
-            MessageBox.Query(
-                              "Replace All",
-                              $"All occurrences were replaced for the following specified text: '{_textToReplace}'",
-                              "Ok"
-                             );
-        }
-        else
-        {
-            MessageBox.Query(
-                              "Replace All",
-                              $"None of the following specified text was found: '{_textToFind}'",
-                              "Ok"
-                             );
-        }
-    }
-
-    private void ReplaceNext() { ContinueFind(true, true); }
-    private void ReplacePrevious() { ContinueFind(false, true); }
-
-    private View CreateReplaceTab()
-    {
-        var d = new View()
-        {
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
-
-        int lblWidth = "Replace:".Length;
-
-        var label = new Label
-        {
-            Width = lblWidth,
-            TextAlignment = Alignment.End,
-            Text = "Find:"
-        };
-        d.Add(label);
-
-        SetFindText();
-
-        var txtToFind = new TextField
-        {
-            X = Pos.Right(label) + 1,
-            Y = Pos.Top(label),
-            Width = Dim.Fill(1),
-            Text = _textToFind
-        };
-        txtToFind.HasFocusChanging += (s, e) => txtToFind.Text = _textToFind;
-        d.Add(txtToFind);
-
-        var btnFindNext = new Button
-        {
-            X = Pos.Align(Alignment.Center),
-            Y = Pos.AnchorEnd(),
-            Enabled = !string.IsNullOrEmpty(txtToFind.Text),
-            IsDefault = true,
-            Text = "Replace _Next"
-        };
-        btnFindNext.Accept += (s, e) => ReplaceNext();
-        d.Add(btnFindNext);
-
-        label = new()
-        {
-            X = Pos.Left(label),
-            Y = Pos.Top(label) + 1,
-            Text = "Replace:"
-        };
-        d.Add(label);
-
-        SetFindText();
-
-        var txtToReplace = new TextField
-        {
-            X = Pos.Right(label) + 1,
-            Y = Pos.Top(label),
-            Width = Dim.Fill(1),
-            Text = _textToReplace
-        };
-        txtToReplace.TextChanged += (s, e) => _textToReplace = txtToReplace.Text;
-        d.Add(txtToReplace);
-
-        var btnFindPrevious = new Button
-        {
-            X = Pos.Align(Alignment.Center),
-            Y = Pos.AnchorEnd(),
-            Enabled = !string.IsNullOrEmpty(txtToFind.Text),
-            Text = "Replace _Previous"
-        };
-        btnFindPrevious.Accept += (s, e) => ReplacePrevious();
-        d.Add(btnFindPrevious);
-
-        var btnReplaceAll = new Button
-        {
-            X = Pos.Align(Alignment.Center),
-            Y = Pos.AnchorEnd(),
-            Enabled = !string.IsNullOrEmpty(txtToFind.Text),
-            Text = "Replace _All"
-        };
-        btnReplaceAll.Accept += (s, e) => ReplaceAll();
-        d.Add(btnReplaceAll);
-
-        txtToFind.TextChanged += (s, e) =>
-        {
-            _textToFind = txtToFind.Text;
-            _textView.FindTextChanged();
-            btnFindNext.Enabled = !string.IsNullOrEmpty(txtToFind.Text);
-            btnFindPrevious.Enabled = !string.IsNullOrEmpty(txtToFind.Text);
-            btnReplaceAll.Enabled = !string.IsNullOrEmpty(txtToFind.Text);
-        };
-
-        var ckbMatchCase = new CheckBox
-        {
-            X = 0,
-            Y = Pos.Top(txtToFind) + 2,
-            CheckedState = _matchCase ? CheckState.Checked : CheckState.UnChecked,
-            Text = "Match c_ase"
-        };
-        ckbMatchCase.CheckedStateChanging += (s, e) => _matchCase = e.NewValue == CheckState.Checked;
-        d.Add(ckbMatchCase);
-
-        var ckbMatchWholeWord = new CheckBox
-        {
-            X = 0,
-            Y = Pos.Top(ckbMatchCase) + 1,
-            CheckedState = _matchWholeWord ? CheckState.Checked : CheckState.UnChecked,
-            Text = "Match _whole word"
-        };
-        ckbMatchWholeWord.CheckedStateChanging += (s, e) => _matchWholeWord = e.NewValue == CheckState.Checked;
-        d.Add(ckbMatchWholeWord);
-
-        return d;
     }
 
     private bool Save()
@@ -1256,16 +675,6 @@ public class QuatEditorWindow : Window
         }
 
         return true;
-    }
-
-    private void SelectAll() { _textView.SelectAll(); }
-
-    private void SetFindText()
-    {
-        _textToFind = !string.IsNullOrEmpty(_textView.SelectedText) ? _textView.SelectedText :
-                      string.IsNullOrEmpty(_textToFind) ? "" : _textToFind;
-
-        _textToReplace = string.IsNullOrEmpty(_textToReplace) ? "" : _textToReplace;
     }
 
     #endregion

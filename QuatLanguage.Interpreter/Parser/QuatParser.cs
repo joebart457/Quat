@@ -1,9 +1,8 @@
 ﻿using ParserLite;
 using ParserLite.Exceptions;
-using QuatLanguage.Interpreter.Constants;
-using QuatLanguage.Interpreter.Engine;
-using QuatLanguage.Interpreter.Engine.Words;
-using QuatLanguage.Interpreter.Memory;
+using QuatLanguage.Core.Constants;
+using QuatLanguage.Core.Engine.Words;
+using QuatLanguage.Core.Memory;
 using System.Runtime.InteropServices;
 using TokenizerCore;
 using TokenizerCore.Models.Constants;
@@ -14,35 +13,36 @@ namespace QuatLanguage.Interpreter.Parser;
 public class QuatParser : TokenParser
 {
 
-    private List<Func<IMemoryManager, TokenParser, Word?>> _wordParsingRules = new List<Func<IMemoryManager, TokenParser, Word?>>()
+    private List<Func<IMemoryManager, TokenParser, QuatWord?>> _wordParsingRules = new List<Func<IMemoryManager, TokenParser, QuatWord?>>()
     {
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.If)) return new BuiltinIf(tokenParser.Previous());                  else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Else)) return new BuiltinElse(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.End)) return new BuiltinEnd(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Return)) return new BuiltinReturn(tokenParser.Previous());          else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Add)) return new BuiltinAdd(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Neg)) return new BuiltinNeg(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Cmp)) return new BuiltinCmp(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FAdd)) return new BuiltinFAdd(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FNeg)) return new BuiltinFNeg(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FCmp)) return new BuiltinFCmp(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Dup)) return new BuiltinDup(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Swap)) return new BuiltinStore(tokenParser.Previous());             else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Pop)) return new BuiltinPop(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Fetch)) return new BuiltinFetch(tokenParser.Previous());            else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Store)) return new BuiltinStore(tokenParser.Previous());            else return null; },
-        
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FetchByte)) return new BuiltinFetchByte(tokenParser.Previous());    else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.PrintChar)) return new BuiltinPrintChar(tokenParser.Previous());    else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Go)) return new BuiltinGo(tokenParser.Previous());                  else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Prep)) return new BuiltinPrep(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.StoreByte)) return new BuiltinStoreByte(tokenParser.Previous());    else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FMove)) return new BuiltinFMove(tokenParser.Previous());            else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.MoveF)) return new BuiltinMoveF(tokenParser.Previous());            else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Stay)) return new BuiltinStay(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Over)) return new BuiltinOver(tokenParser.Previous());              else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Rot)) return new BuiltinRot(tokenParser.Previous());                else return null; },
-        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Debug)) return new BuiltinDebug(tokenParser.Previous());            else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.If)) return new BuiltinIf(tokenParser.Previous());                   else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Else)) return new BuiltinElse(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.End)) return new BuiltinEnd(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Return)) return new BuiltinReturn(tokenParser.Previous());           else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Add)) return new BuiltinAdd(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Neg)) return new BuiltinNeg(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Cmp)) return new BuiltinCmp(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FAdd)) return new BuiltinFAdd(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FNeg)) return new BuiltinFNeg(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FCmp)) return new BuiltinFCmp(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Dup)) return new BuiltinDup(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Swap)) return new BuiltinStore(tokenParser.Previous());              else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Pop)) return new BuiltinPop(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Fetch)) return new BuiltinFetch(tokenParser.Previous());             else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Store)) return new BuiltinStore(tokenParser.Previous());             else return null; },
+                                                                                                                                                           
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FetchByte)) return new BuiltinFetchByte(tokenParser.Previous());     else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.PrintChar)) return new BuiltinPrintChar(tokenParser.Previous());     else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Go)) return new BuiltinGo(tokenParser.Previous());                   else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Prep)) return new BuiltinPrep(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.StoreByte)) return new BuiltinStoreByte(tokenParser.Previous());     else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.FMove)) return new BuiltinFMove(tokenParser.Previous());             else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.MoveF)) return new BuiltinMoveF(tokenParser.Previous());             else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Stay)) return new BuiltinStay(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Over)) return new BuiltinOver(tokenParser.Previous());               else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Rot)) return new BuiltinRot(tokenParser.Previous());                 else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.Debug)) return new BuiltinDebug(tokenParser.Previous());             else return null; },
+        (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinWords.LoadLibrary)) return new BuiltinLoadLibrary(tokenParser.Previous()); else return null; },
         (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinTokenTypes.Integer)) return new LiteralInteger(tokenParser.Previous(), nint.Parse(tokenParser.Previous().Lexeme));         else return null; },
         (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinTokenTypes.Double)) return new LiteralFloatingPoint(tokenParser.Previous(), NFloat.Parse(tokenParser.Previous().Lexeme));  else return null; },
         (memoryManager, tokenParser) => { if (tokenParser.AdvanceIfMatch(BuiltinTokenTypes.Word)) return new Identifier(tokenParser.Previous());                            else return null; },
@@ -69,7 +69,7 @@ public class QuatParser : TokenParser
 
     private readonly Tokenizer _tokenizer = Tokenizers.Default;
     private readonly IMemoryManager _memoryManager;
-    public QuatParser(IMemoryManager memoryManager, List<Func<IMemoryManager, TokenParser, Word?>> wordParsingRules, bool overrideExisting = false, Tokenizer? tokenizer = null)
+    public QuatParser(IMemoryManager memoryManager, List<Func<IMemoryManager, TokenParser, QuatWord?>> wordParsingRules, bool overrideExisting = false, Tokenizer? tokenizer = null)
     {
         if (overrideExisting)
             _wordParsingRules = wordParsingRules;
@@ -120,7 +120,7 @@ public class QuatParser : TokenParser
         AdvancePastComments();
         Consume(BuiltinWords.Define, "expect <name> :- definition ;");
         AdvancePastComments();
-        var words = new List<Word>();
+        var words = new List<QuatWord>();
         if (!AdvanceIfMatch(BuiltinWords.EndDefinition))
         {
             do
@@ -132,7 +132,7 @@ public class QuatParser : TokenParser
         return new Grammar(name, words);
     }
 
-    public Word ParseWord()
+    public QuatWord ParseWord()
     {
         AdvancePastComments();
         foreach (var wordParsingRule in _wordParsingRules)

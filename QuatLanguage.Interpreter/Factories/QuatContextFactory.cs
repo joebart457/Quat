@@ -1,23 +1,23 @@
 ﻿using ParserLite.Exceptions;
 using ParserLite;
-using QuatLanguage.Interpreter.Engine;
-using QuatLanguage.Interpreter.Memory;
+using QuatLanguage.Core.Engine;
+using QuatLanguage.Core.Memory;
 using QuatLanguage.Interpreter.Parser;
 using TokenizerCore.Model;
-using QuatLanguage.Interpreter.Engine.Words;
+using QuatLanguage.Core.Engine.Words;
 
 namespace QuatLanguage.Interpreter.Factories;
 
 
 public class QuatContextFactory
 {
-    protected List<Func<IMemoryManager, TokenParser, Word?>> _parsingRules = new();
+    protected List<Func<IMemoryManager, TokenParser, QuatWord?>> _parsingRules = new();
     protected List<TokenizerRule> _tokenizerRules = new();
     public static QuatContextFactory CreateNew() => new QuatContextFactory();
     protected bool _useDetachedMemoryModel = false;
     protected bool _useGlobalMemoryModel = false;
     protected IMemoryManager? _memoryManager;
-    public virtual QuatContextFactory AddBasicWord<T>(string? nameOverride = null) where T : Word, new()
+    public virtual QuatContextFactory AddBasicWord<T>(string? nameOverride = null) where T : QuatWord, new()
     {
         var name = nameOverride ?? typeof(T).Name;
         _tokenizerRules.Add(new(name, name));
@@ -34,7 +34,7 @@ public class QuatContextFactory
         return this;
     }
 
-    public virtual QuatContextFactory AddRule(Func<IMemoryManager, TokenParser, Word?> parsingRule)
+    public virtual QuatContextFactory AddRule(Func<IMemoryManager, TokenParser, QuatWord?> parsingRule)
     {
         _parsingRules.Add(parsingRule);
         return this;

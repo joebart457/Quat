@@ -1,10 +1,10 @@
 ﻿using ParserLite.Exceptions;
 using ParserLite;
-using QuatLanguage.Interpreter.Engine;
+using QuatLanguage.Core.Engine;
 using QuatLanguage.Interpreter.Parser;
 using TokenizerCore.Model;
-using QuatLanguage.Interpreter.Memory;
-using QuatLanguage.Interpreter.Engine.Words;
+using QuatLanguage.Core.Memory;
+using QuatLanguage.Core.Engine.Words;
 using QuatLanguage.Interpreter.Factories;
 
 namespace QuatLanguage.Debugger.Context;

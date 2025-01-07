@@ -1,12 +1,5 @@
 ﻿using QuatLanguage.Debugger.Context;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 using static QuatLanguage.Debugger.Visualization.Natives.NativeFunctions;
 
 namespace QuatLanguage.Debugger.Visualization.Extensions;

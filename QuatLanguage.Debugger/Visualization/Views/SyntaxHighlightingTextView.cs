@@ -1,11 +1,11 @@
 ﻿using Terminal.Gui;
 using TokenizerCore.Models.Constants;
 using TokenizerCore.Interfaces;
-using QuatLanguage.Interpreter.Constants;
+using QuatLanguage.Core.Constants;
 using QuatLanguage.Interpreter.Parser;
 using Attribute = Terminal.Gui.Attribute;
 using System.Text;
-using QuatLanguage.Interpreter.Engine.Words;
+using QuatLanguage.Core.Engine.Words;
 
 namespace QuatLanguage.Debugger.Visualization.Views;
 
@@ -48,6 +48,7 @@ public class SingleWordSuggestionGenerator : ISuggestionGenerator
         BuiltinWords.ReadKey.ToUpperInvariant(),
         BuiltinWords.Debug.ToUpperInvariant(),
         BuiltinWords.Res.ToUpperInvariant(),
+        BuiltinWords.LoadLibrary.ToUpperInvariant(),
     };
 
     private List<string> GetSuggestions()
@@ -222,15 +223,6 @@ public class SyntaxHighlightingTextView: TextView
     public override void OnContentsChanged()
     {
         contentsHaveChanged = true;
-        //if (_tokenizeTask == null || _tokenizeTask.IsFaulted)
-        //{
-        //    _tokenizeTask = Task.Run(() => Tokenizers.Default.Tokenize(Text).ToList());
-        //}
-        //else if (_tokenizeTask.IsCompletedSuccessfully)
-        //{
-        //    tokens = _tokenizeTask.Result;
-        //    _tokenizeTask = Task.Run(() => Tokenizers.Default.Tokenize(Text).ToList());
-        //}
         base.OnContentsChanged();
     }
 
@@ -241,21 +233,6 @@ public class SyntaxHighlightingTextView: TextView
         var text = Text;
         if (contentsHaveChanged)
         {
-            //if (_tokenizeTask == null || _tokenizeTask.IsFaulted)
-            //{
-            //    _tokenizeTask = Task.Run(() => Tokenizers.Default.Tokenize(text).ToList());
-            //}
-            //else if (_tokenizeTask.IsCompletedSuccessfully)
-            //{
-            //    tokens = _tokenizeTask.Result;
-            //    _tokenizeTask = Task.Run(() => Tokenizers.Default.Tokenize(text).ToList());
-            //}
-            //while (!_tokenizeTask.IsCompleted) { Thread.Sleep(100); }
-            //if (_tokenizeTask.IsCompletedSuccessfully)
-            //{
-            //    tokens = _tokenizeTask.Result;
-            //    _tokenizeTask = Task.Run(() => Tokenizers.Default.Tokenize(text).ToList());
-            //}
 
             if (_parsingTask == null || _parsingTask.IsFaulted)
             {
@@ -346,6 +323,7 @@ public class SyntaxHighlightingTextView: TextView
             { BuiltinTokenTypes.String, new Attribute(Color.Cyan, GetNormalColor().Background) },
             { BuiltinTokenTypes.EndOfLineComment, new Attribute(Color.Green, GetNormalColor().Background) },
             { BuiltinTokenTypes.MultiLineComment, new Attribute(Color.Green, GetNormalColor().Background) },
+            { BuiltinWords.LoadLibrary, new Attribute(Color.BrightCyan, GetNormalColor().Background) },
         };
     }
 }

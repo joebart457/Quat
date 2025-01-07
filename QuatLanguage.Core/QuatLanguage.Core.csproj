@@ -5,7 +5,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x86</Platforms>
+    <Title>QuatLanguage.Core</Title>
+    <Version>3.0.0</Version>
+    <Description>The core library containing the built-in Quat words. 
+This library can also be used as a basis for extending the built-in and/or creating custom Quat words. </Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
