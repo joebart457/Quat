@@ -121,6 +121,7 @@ public class QuatEditorWindow : Window
         }
         catch (Exception ex)
         {
+            _debuggableContext?.Dispose();
             if (Running == false) Application.Run(this);
             MessageBox.ErrorQuery("Error!", ex.Message, "Ok");
             ExitDebugView();

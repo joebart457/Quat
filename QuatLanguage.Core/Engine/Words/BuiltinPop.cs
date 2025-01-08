@@ -17,5 +17,4 @@ public class BuiltinPop : QuatWord
     {
         _ = context.PopVStack();
     }
-
 }

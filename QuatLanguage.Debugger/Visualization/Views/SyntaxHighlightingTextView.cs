@@ -323,7 +323,7 @@ public class SyntaxHighlightingTextView: TextView
             { BuiltinTokenTypes.String, new Attribute(Color.Cyan, GetNormalColor().Background) },
             { BuiltinTokenTypes.EndOfLineComment, new Attribute(Color.Green, GetNormalColor().Background) },
             { BuiltinTokenTypes.MultiLineComment, new Attribute(Color.Green, GetNormalColor().Background) },
-            { BuiltinWords.LoadLibrary, new Attribute(Color.BrightCyan, GetNormalColor().Background) },
+            { BuiltinWords.LoadLibrary, new Attribute(Color.Magenta, GetNormalColor().Background) },
         };
     }
 }

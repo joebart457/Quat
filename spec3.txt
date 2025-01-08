@@ -1,7 +1,12 @@
 X :- VARIABLE;
 
 Main :-
+
+    "C:\\Users\\Jimmy\\Desktop\\Repositories\\QuatLanguage\\QuatLanguage\\bin\\Debug\\net8.0\\QuatLanguage.dll"
+	LOADLIBRARY
 	"hello from QUAT (rewrite)" print
+	5000
+	ThreadSleep
 	8.0 FMOVE X STORE
 	8.00d 
 	X FETCH MOVEF
